@@ -1,7 +1,7 @@
 from math import sqrt, acos , pi
 from decimal import Decimal, getcontext
 
-getcontext().prec = 30
+getcontext().prec = 10
 
 class Vector(object):
 
@@ -72,27 +72,59 @@ class Vector(object):
                 raise e
 
     def check_parallel(self,v,tolerance=1e-5):
-        return abs(abs(self.dot_product(v)) - self.magnitude() * v.magnitude()) < tolerance
+        return abs(abs(self.dot_product(v)) - self.magnitude() * \
+        v.magnitude()) < tolerance
 
     def check_orthogonal(self,v,tolerance=1e-10):
         return abs(self.dot_product(v)) < tolerance
 
-vector_1 = Vector([-7.579,-7.88])
-vector_2 = Vector([22.737,23.64])
-print vector_1.check_parallel(vector_2)
-print vector_1.check_orthogonal(vector_2)
+    def parallel_component(self, v):
+        try:
 
-vector_1 = Vector([-2.029,9.97,4.172])
-vector_2 = Vector([-9.231,-6.639,-7.245])
-print vector_1.check_parallel(vector_2)
-print vector_1.check_orthogonal(vector_2)
+            return (v.normalized()).times_scalar(self.dot_product(v.normalized()))
+        except Exception as e:
+            if str(e) == self.CANNOT_NORMALIZE_ZERO_VECTOR_MSG:
+                raise Exception(self.NO_UNIQUE_PARALLEL_COMPONENT_MSG)
+            else:
+                raise e # coding=utf-8
 
-vector_1 = Vector([-2.328,-7.284,-1.214])
-vector_2 = Vector([-1.821,1.072,-2.94])
-print vector_1.check_parallel(vector_2)
-print vector_1.check_orthogonal(vector_2)
+    def orth_component(self, v):
+        try:
+            return self.minus(self.parallel_component(v))
+        except Exception as e:
+            if str(e) == self.NO_UNIQUE_PARALLEL_COMPONENT_MSG:
+                raise Exception(self.NO_UNIQUE_PARALLEL_COMPONENT_MSG)
+            else:
+                raise e
 
-vector_1 = Vector([2.118,4.827])
-vector_2 = Vector([0,0])
-print vector_1.check_parallel(vector_2)
-print vector_1.check_orthogonal(vector_2)
+    def cross_product(self, v):
+        product = []
+        product.append(self.coordinates[1] * v.coordinates[2]-v.coordinates[1]*self.coordinates[2])
+        product.append(-self.coordinates[0] * v.coordinates[2]+v.coordinates[0]*self.coordinates[2])
+        product.append(self.coordinates[0] * v.coordinates[1]-v.coordinates[0]*self.coordinates[1])
+
+        return Vector(product)
+
+    def area_of_parallelogram(self,v):
+        return self.cross_product(v).magnitude()
+
+
+
+
+
+
+
+vector_1 = Vector([8.462,7.893,-8.187])
+vector_2 = Vector([6.984,-5.975,4.778])
+print vector_1.cross_product(vector_2)
+
+
+vector_1 = Vector([-8.987,-9.838,5.031])
+vector_2 = Vector([-4.268,-1.861,-8.866])
+print vector_1.area_of_parallelogram(vector_2)
+
+
+
+vector_1 = Vector([1.5,9.547,3.691])
+vector_2 = Vector([-6.007,0.124,5.772])
+print vector_1.area_of_parallelogram(vector_2) * Decimal(0.5)
