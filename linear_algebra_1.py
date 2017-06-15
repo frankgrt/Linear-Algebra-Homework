@@ -1,7 +1,7 @@
 from math import sqrt, acos , pi
 from decimal import Decimal, getcontext
 
-getcontext().prec = 10
+getcontext().prec = 5
 
 class Vector(object):
 
@@ -73,7 +73,7 @@ class Vector(object):
 
     def check_parallel(self,v,tolerance=1e-5):
         return abs(abs(self.dot_product(v)) - self.magnitude() * \
-        v.magnitude()) < tolerance
+            v.magnitude()) < tolerance
 
     def check_orthogonal(self,v,tolerance=1e-10):
         return abs(self.dot_product(v)) < tolerance
@@ -97,13 +97,33 @@ class Vector(object):
             else:
                 raise e
 
-    def cross_product(self, v):
-        product = []
-        product.append(self.coordinates[1] * v.coordinates[2]-v.coordinates[1]*self.coordinates[2])
-        product.append(-self.coordinates[0] * v.coordinates[2]+v.coordinates[0]*self.coordinates[2])
-        product.append(self.coordinates[0] * v.coordinates[1]-v.coordinates[0]*self.coordinates[1])
 
-        return Vector(product)
+
+    def cross_product(self, v):
+        #product = []
+        #product.append(self.coordinates[1] * v.coordinates[2]-v.coordinates[1]*self.coordinates[2])
+        #product.append(-self.coordinates[0] * v.coordinates[2]+v.coordinates[0]*self.coordinates[2])
+        #product.append(self.coordinates[0] * v.coordinates[1]-v.coordinates[0]*self.coordinates[1])
+        try:
+            x1,y1,z1 = self.coordinates
+            x2,y2,z2 = v.coordinates
+            product = [y1*z2-y2*z1,-(x1*z2-x2*z1),x1*y2-x2*y1]
+            return Vector(product)
+
+        except Exception as e:
+            if len(self.coordinates)==2 and len(v.coordinates) ==2:
+                u1 = [x for x in self.coordinates]
+                u2 = [x for x in v.coordinates]
+                print u1
+                print u2
+                u1.append(0)
+                u2.append(0)
+                print u1
+                print u2
+                return Vector(u1).cross_product(Vector(u2))
+            elif len(self.coordinates) !=3 or len(v.coordinates) !=3:
+                raise Exception ('not dimension not equal or not enough value')
+
 
     def area_of_parallelogram(self,v):
         return self.cross_product(v).magnitude()
@@ -114,11 +134,11 @@ class Vector(object):
 
 
 
-vector_1 = Vector([8.462,7.893,-8.187])
-vector_2 = Vector([6.984,-5.975,4.778])
-print vector_1.cross_product(vector_2)
+#vector_1 = Vector([8.462,7.893,12])
+#vector_2 = Vector([6.984,-5.975])
+#print vector_1.cross_product(vector_2)
 
-
+"""
 vector_1 = Vector([-8.987,-9.838,5.031])
 vector_2 = Vector([-4.268,-1.861,-8.866])
 print vector_1.area_of_parallelogram(vector_2)
@@ -128,3 +148,4 @@ print vector_1.area_of_parallelogram(vector_2)
 vector_1 = Vector([1.5,9.547,3.691])
 vector_2 = Vector([-6.007,0.124,5.772])
 print vector_1.area_of_parallelogram(vector_2) * Decimal(0.5)
+"""
