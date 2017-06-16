@@ -2,15 +2,15 @@ from decimal import Decimal, getcontext
 
 from vector import Vector
 
-getcontext().prec = 15
+getcontext().prec = 30
 
 
-class Line(object):
+class Plane(object):
 
     NO_NONZERO_ELTS_FOUND_MSG = 'No nonzero elements found'
 
     def __init__(self, normal_vector=None, constant_term=None):
-        self.dimension = 2
+        self.dimension = 3
 
         if not normal_vector:
             all_zeros = ['0']*self.dimension
@@ -30,14 +30,14 @@ class Line(object):
             c = self.constant_term
             basepoint_coords = ['0']*self.dimension
 
-            initial_index = Line.first_nonzero_index(n)
+            initial_index = Plane.first_nonzero_index(n)
             initial_coefficient = n[initial_index]
 
             basepoint_coords[initial_index] = c/initial_coefficient
             self.basepoint = Vector(basepoint_coords)
 
         except Exception as e:
-            if str(e) == Line.NO_NONZERO_ELTS_FOUND_MSG:
+            if str(e) == Plane.NO_NONZERO_ELTS_FOUND_MSG:
                 self.basepoint = None
             else:
                 raise e
@@ -70,7 +70,7 @@ class Line(object):
         n = self.normal_vector
 
         try:
-            initial_index = Line.first_nonzero_index(n)
+            initial_index = Plane.first_nonzero_index(n)
             terms = [write_coefficient(n[i], is_initial_term=(i==initial_index)) + 'x_{}'.format(i+1)
                      for i in range(self.dimension) if round(n[i], num_decimal_places) != 0]
             output = ' '.join(terms)
@@ -94,70 +94,46 @@ class Line(object):
         for k, item in enumerate(iterable):
             if not MyDecimal(item).is_near_zero():
                 return k
-        raise Exception(Line.NO_NONZERO_ELTS_FOUND_MSG)
-    def parallel_to (self,ell):
+        raise Exception(Plane.NO_NONZERO_ELTS_FOUND_MSG)
+
+    def parallel_to (self,p):
         n1 = self.normal_vector
-        n2 = ell.normal_vector
+        n2 = p.normal_vector
         return Vector.check_parallel(n1,n2)
 
-    def is_same_line(self,ell):
+    def is_same_plane(self,p):
         """
         if self.normal_vector.is_zero():
-            if not ell.normal_vector.is_zero():
+            if not p.normal_vector.is_zero():
                 return False
             else:
-                diff = self.constant_term - ell.constant_term
+                diff = self.constant_term - p.constant_term
                 return MyDecimal(diff).is_near_zero()
-        elif ell.normal_vector.is_zero():
+        elif p.normal_vector.is_zero():
             return False
         """
-        if not self.parallel_to(ell):
+        if not self.parallel_to(p):
             return False
         basepoint1 = self.basepoint
-        basepoint2 = ell.basepoint
+        basepoint2 = p.basepoint
         basepoint_difference = Vector.minus(basepoint1,basepoint2)
-        return Vector.check_parallel(self.normal_vector,basepoint_difference)
-
-    def intersection_with(self,ell):
-        try:
-            A,B = self.normal_vector.coordinates
-            C,D = ell.normal_vector.coordinates
-            K1 = self.constant_term
-            K2 = ell.constant_term
-
-            x = (D*K1-B*K2)/(A*D-B*C)
-            y = (-C*K1+A*K2)/(A*D-B*C)
-
-            return Vector([x,y])
-        except:
-            if self.is_same_line(ell):
-                return False
-            else:
-                return False
-
-
-
+        return Vector.check_orthogonal(self.normal_vector,basepoint_difference)
 
 class MyDecimal(Decimal):
     def is_near_zero(self, eps=1e-10):
         return abs(self) < eps
 
+plane1 = Plane(Vector([-0.412,3.806,0.728]),-3.46)
+plane2 = Plane(Vector([1.03,-9.515,-1.82]),8.65)
+print plane1.parallel_to(plane2)
+print plane1.is_same_plane(plane2)
 
+plane1 = Plane(Vector([2.611,5.528,0.283]),4.6)
+plane2 = Plane(Vector([7.715,8.306,5.342]),3.76)
+print plane1.parallel_to(plane2)
+print plane1.is_same_plane(plane2)
 
-equation1 = Line(Vector([4.046,2.836]), 1.21 )
-equation2 = Line(Vector([10.115,7.09]), 3.025)
-print 'is parallel_to:', equation1.parallel_to(equation2)
-print 'is same line:',equation1.is_same_line(equation2)
-print 'intersection_with', equation1.intersection_with(equation2)
-
-equation1 = Line(Vector(['7.204','3.182']), '8.68' )
-equation2 = Line(Vector(['8.172','4.114']), '9.883')
-print 'is parallel_to:', equation1.parallel_to(equation2)
-print 'is same line:',equation1.is_same_line(equation2)
-print 'intersection_with', equation1.intersection_with(equation2)
-
-equation1 = Line(Vector([1.182,5.562]), 6.744 )
-equation2 = Line(Vector([1.773,8.343]), 9.525)
-print 'is parallel_to:', equation1.parallel_to(equation2)
-print 'is same line:',equation1.is_same_line(equation2)
-print 'intersection_with', equation1.intersection_with(equation2)
+plane1 = Plane(Vector([-7.926,8.625,-7.217]),-7.952)
+plane2 = Plane(Vector([-2.642,2.875,-2.404]),-2.443)
+print plane1.parallel_to(plane2)
+print plane1.is_same_plane(plane2)
