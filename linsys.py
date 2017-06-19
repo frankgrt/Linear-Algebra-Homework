@@ -51,43 +51,42 @@ class LinearSystem(object):
         self[row_to_be_added_to] = Plane(normal_vector = new_vector,
                                             constant_term = new_k)
 
+    def sorting(system):
+        while True:
+            indices = system.indices_of_first_nonzero_terms_in_each_row()
+            a = 0
+            for i in range(len(system)-1):
+                if indices[i] > indices[i+1] or indices[i] < 0:
+                    system.swap_rows(i,i+1)
+                    a += 1
+            if a == 0:
+                break
+
+        return system
+
     def compute_triangular_form(self):
         system = deepcopy(self)
-        a = True
-        while a == True:
-            # sort Equations
-
-            b= True
-            while b == True:
-                indices = system.indices_of_first_nonzero_terms_in_each_row()
-                is_swaped = False
-                for i in range(len(system)-1):
-                    if indices[i] >= indices[i+1] or indices[i] < 0:
-                        system.swap_rows(i,i+1)
-                        is_swaped = True
-
-                if is_swaped == False:
-                    b = False
 
             # check coefficient, and remove coefficient if needed.
 
-            for i,p in enumerate(indices):
-                #is_add_row_to_row = False
-                if p < 0:
+        while True:
+
+            system.sorting()
+            print system
+            indices = system.indices_of_first_nonzero_terms_in_each_row()
+            a = 0
+            for i in range(len(indices)):
+                if indices[i] == -1:
                     break
-                if p < i:
-                    coefficient = - system[i].normal_vector.coordinates[p] / (system[p].normal_vector.coordinates[p])
+                if indices[i] == indices[i-1]:
+                    coefficient = - system[i].normal_vector.coordinates[indices[i]] / (system[i-1].normal_vector.coordinates[indices[i]])
                     system.add_multiple_times_row_to_row(coefficient,i-1,i)
-                    #is_add_row_to_row = True
+                    a += 1
                     break
-                a = False
+            if a == 0:
 
+                return system
 
-
-
-
-
-        return system
 
 
 
@@ -133,15 +132,16 @@ class LinearSystem(object):
         return ret
 
 
+
+
 class MyDecimal(Decimal):
     def is_near_zero(self, eps=1e-10):
         return abs(self) < eps
 
-
 p0 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p1 = Plane(normal_vector=Vector(['0','1','0']), constant_term='2')
-p2 = Plane(normal_vector=Vector(['0','1','-1']), constant_term='3')
-p3 = Plane(normal_vector=Vector(['1','0','-2']), constant_term='2')
+p1 = Plane(normal_vector=Vector(['0','-1','3']), constant_term='1')
+p2 = Plane(normal_vector=Vector(['0','0','-4']), constant_term='4')
+p3 = Plane(normal_vector=Vector(['1','0','-3']), constant_term='3')
 
 
 s = LinearSystem([p0,p1,p2,p3])
