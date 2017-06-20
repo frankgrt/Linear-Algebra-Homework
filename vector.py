@@ -138,7 +138,7 @@ class Vector(object):
 #vector_2 = Vector([6.984,-5.975])
 #print vector_1.cross_product(vector_2)
 
-"""
+
 vector_1 = Vector([-8.987,-9.838,5.031])
 vector_2 = Vector([-4.268,-1.861,-8.866])
 print vector_1.area_of_parallelogram(vector_2)
@@ -148,4 +148,3 @@ print vector_1.area_of_parallelogram(vector_2)
 vector_1 = Vector([1.5,9.547,3.691])
 vector_2 = Vector([-6.007,0.124,5.772])
 print vector_1.area_of_parallelogram(vector_2) * Decimal(0.5)
-"""

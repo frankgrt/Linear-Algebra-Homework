@@ -50,7 +50,7 @@ class LinearSystem(object):
 
         self[row_to_be_added_to] = Plane(normal_vector = new_vector,
                                             constant_term = new_k)
-
+    """
     def sorting(system):
         while True:
             indices = system.indices_of_first_nonzero_terms_in_each_row()
@@ -76,16 +76,39 @@ class LinearSystem(object):
             indices = system.indices_of_first_nonzero_terms_in_each_row()
             a = 0
             for i in range(len(indices)):
-                if indices[i] == -1:
+                if indices[0] < 0 :
                     break
                 if indices[i] == indices[i-1]:
-                    coefficient = - system[i].normal_vector.coordinates[indices[i]] / (system[i-1].normal_vector.coordinates[indices[i]])
+                    coefficient = - system[i].normal_vector.coordinates[indices[i]] / (system[i-1].normal_vector.coordinates[indices[i-1]])
                     system.add_multiple_times_row_to_row(coefficient,i-1,i)
                     a += 1
                     break
             if a == 0:
+                break
 
-                return system
+        return system
+
+
+    """
+    def compute_triangular_form(self):
+        system = deepcopy(self)
+        rows = len(system)
+        cols = system.dimension
+        for i,p in enumerate(system):
+            while i < cols:
+                if p.normal_vector.coordinates[i] == 0:
+                    for k in range(i+1, rows):
+                        if system[k].normal_vector.coordinates[i] != 0:
+                            system.swap_rows(i,k)
+                            break
+                break
+
+            for j in range(i+1, rows):
+                coefficient = -system[j].normal_vector.coordinates[i]/system[i].normal_vector.coordinates[i]
+                system.add_multiple_times_row_to_row(coefficient,i,j)
+
+
+        return system
 
 
 
@@ -138,12 +161,43 @@ class MyDecimal(Decimal):
     def is_near_zero(self, eps=1e-10):
         return abs(self) < eps
 
-p0 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p1 = Plane(normal_vector=Vector(['0','-1','3']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['0','0','-4']), constant_term='4')
-p3 = Plane(normal_vector=Vector(['1','0','-3']), constant_term='3')
+p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
+p2 = Plane(normal_vector=Vector(['0','1','1']), constant_term='2')
+s = LinearSystem([p1,p2])
+t = s.compute_triangular_form()
+if not (t[0] == p1 and
+        t[1] == p2):
+    print 'test case 1 failed'
+    print t
 
+p1 = Plane(normal_vector=Vector(['1.7','1','1']), constant_term='1')
+p2 = Plane(normal_vector=Vector(['1.3','1.3','1']), constant_term='2')
+s = LinearSystem([p1,p2])
+t = s.compute_triangular_form()
+if not (t[0] == p1 and
+        t[1] == Plane(constant_term='1')):
+    print 'test case 2 failed'
+    print t
+p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
+p2 = Plane(normal_vector=Vector(['0','1','0']), constant_term='2')
+p3 = Plane(normal_vector=Vector(['1.3','1','-1']), constant_term='3')
+p4 = Plane(normal_vector=Vector(['1.9','0','-2']), constant_term='2')
+s = LinearSystem([p1,p2,p3,p4])
+t = s.compute_triangular_form()
+if not (t[0] == p1 and
+        t[1] == p2 and
+        t[2] == Plane(normal_vector=Vector(['0','0','-2']), constant_term='2') and
+        t[3] == Plane()):
+    print 'test case 3 failed'
+    print t
 
-s = LinearSystem([p0,p1,p2,p3])
-
-print s.compute_triangular_form()
+p1 = Plane(normal_vector=Vector(['0','1','1']), constant_term='1')
+p2 = Plane(normal_vector=Vector(['1.3','-1','1']), constant_term='2')
+p3 = Plane(normal_vector=Vector(['1.9','2','-5']), constant_term='3')
+s = LinearSystem([p1,p2,p3])
+t = s.compute_triangular_form()
+if not (t[0] == Plane(normal_vector=Vector(['1','-1','1']), constant_term='2') and
+        t[1] == Plane(normal_vector=Vector(['0','1','1']), constant_term='1') and
+        t[2] == Plane(normal_vector=Vector(['0','0','-9']), constant_term='-2')):
+    print 'test case 4 failed'
+    print t
