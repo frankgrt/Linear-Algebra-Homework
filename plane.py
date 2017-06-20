@@ -122,14 +122,11 @@ class Plane(object):
 class MyDecimal(Decimal):
     def is_near_zero(self, eps=1e-10):
         return abs(self) < eps
-<<<<<<< HEAD
+
+
+
+
 """
-||||||| merged common ancestors
-
-=======
-
-
->>>>>>> ebd19bbd457b4f553ad4ecb49eb6ccf37ad8cec7
 plane1 = Plane(Vector([-0.412,3.806,0.728]),-3.46)
 plane2 = Plane(Vector([1.03,-9.515,-1.82]),8.65)
 print plane1.parallel_to(plane2)
@@ -144,10 +141,4 @@ plane1 = Plane(Vector([-7.926,8.625,-7.217]),-7.952)
 plane2 = Plane(Vector([-2.642,2.875,-2.404]),-2.443)
 print plane1.parallel_to(plane2)
 print plane1.is_same_plane(plane2)
-<<<<<<< HEAD
 """
-||||||| merged common ancestors
-=======
-
-print plane1
->>>>>>> ebd19bbd457b4f553ad4ecb49eb6ccf37ad8cec7
