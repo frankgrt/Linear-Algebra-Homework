@@ -162,7 +162,7 @@ class LinearSystem(object):
 
                 tf.add_multiple_times_row_to_row(coefficient_2,i,j)
         return tf
-
+    """
     def compute_solution(self):
         tf = self.compute_rref()
         indices = tf.indices_of_first_nonzero_terms_in_each_row()
@@ -177,6 +177,40 @@ class LinearSystem(object):
             return "Infinite solutions"
         for j in range(tf.dimension):
             print tf[j]
+    """
+    def compute_solution(self):
+        try:
+            return self.do_gaussian_elimination_and_extract_solution()
+
+        except Exception as e:
+            if (str(e) == self.NO_SOLUTIONS_MSG or
+                 str(e) == self.INF_SOLUTIONS_MSG):
+                 return str(e)
+            else:
+                raise e
+
+    def do_gaussian_elimination_and_extract_solution(self):
+        rref = self.compute_rref()
+
+        rref.raise_exception_if_contradictory_equation()
+        rref.raise_exception_if_too_few_pivots()
+
+        num_variables = rref.dimension
+        solution_coordinates = [rref.planes[i].constant_term for i in
+                                range(num_variables)]
+        return Vector(solution_coordinates)
+
+    def raise_exception_if_contradictory_equation(self):
+        for p in self.planes:
+            try:
+                p.first_nonzero_index(p.normal_vector)
+
+            except Exception as e:
+
+
+
+
+
 
     def indices_of_first_nonzero_terms_in_each_row(self):
         num_equations = len(self)
