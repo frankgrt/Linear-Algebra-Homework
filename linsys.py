@@ -95,6 +95,7 @@ class LinearSystem(object):
         rows = len(system)
         cols = system.dimension
         for i,p in enumerate(system):
+            # if the first nonzero index is not i, swap
             while i < cols:
                 if p.normal_vector.coordinates[i] == 0:
                     for k in range(i+1, rows):
@@ -102,49 +103,80 @@ class LinearSystem(object):
                             system.swap_rows(i,k)
                             break
                 break
-
+            # use the number i row to eliminate the coefficient of index before
+            # i index for each row below the number i row
             for j in range(i+1, rows):
-                coefficient = -system[j].normal_vector.coordinates[i]/system[i].normal_vector.coordinates[i]
+                coefficient = -system[j].normal_vector.coordinates[i]/ \
+                                system[i].normal_vector.coordinates[i]
                 system.add_multiple_times_row_to_row(coefficient,i,j)
-
 
         return system
 
-
-
+    """
+    # use algorethem from myself
     def compute_rref(self):
         tf = self.compute_triangular_form()
-
-        print tf 
-
+        # change the first nonzero coefficient to 1
         for i in range(min(len(tf),tf.dimension)):
-            coefficient = tf[i].normal_vector.coordinates[i]
+            coefficient = Decimal(tf[i].normal_vector.coordinates[i])
+            if coefficient != 0:
+                new_normal_vector = tf[i].normal_vector.\
+                      times_scalar(Decimal(1.0)/coefficient)
+                new_constant_term = tf[i].constant_term / coefficient
+                tf[i] = Plane(normal_vector=new_normal_vector, \
+                       constant_term=new_constant_term)
 
-            #tf[i].normal_vector.times_scalar(Decimal(1.0)/coefficient)
-            new_normal_vector = tf[i].normal_vector.times_scalar(Decimal(1.0)/coefficient)
-
-            new_constant_term = tf[i].constant_term / coefficient
-            tf[i] = Plane(normal_vector=new_normal_vector, constant_term=new_constant_term)
-
-        """
+        # for each row, eliminate other coeffictient after first nonzero index
         for i,p in enumerate(tf):
-
             row = p.normal_vector.coordinates
             dimension = len(row)
             if i < dimension:
                 for j in range(i+1,min(len(tf),tf.dimension)):
-                    coefficient = - p.normal_vector.coordinates[j]
+                    coefficient = Decimal(- tf[i].normal_vector.coordinates[j])
                     tf.add_multiple_times_row_to_row(coefficient,j,i)
             if i > dimension:
                 tf.add_multiple_times_row_to_row(-1,dimension,i)
-        """
+
         return tf
 
 
+    """
 
 
+    def compute_rref(self):
+        tf = self.compute_triangular_form()
+        rows = len(tf)
+        cols = tf.dimension
+        indices = tf.indices_of_first_nonzero_terms_in_each_row()
 
+        for i in range(rows)[::-1]:
+            if indices[i] < 0:
+                continue
+            coefficient_1 = tf[i].normal_vector.coordinates[indices[i]]
+            new_normal_vector = tf[i].normal_vector.times_scalar(Decimal(1/coefficient_1))
+            new_constant_term = tf[i].constant_term / coefficient_1
+            tf[i] = Plane(normal_vector=new_normal_vector, constant_term=new_constant_term)
+            #print tf[i]
+            for j in range(i)[::-1]:
+                coefficient_2 = -tf[j].normal_vector.coordinates[indices[i]]
 
+                tf.add_multiple_times_row_to_row(coefficient_2,i,j)
+        return tf
+
+    def compute_solution(self):
+        tf = self.compute_rref()
+        indices = tf.indices_of_first_nonzero_terms_in_each_row()
+        a = 0
+        for i,p in enumerate(indices):
+            b = MyDecimal(tf[i].constant_term)
+            if p==-1 and (not b.is_near_zero()) :
+                return "NO Solutions"
+            if p==-1:
+                a +=1
+        if len(tf)-a < tf.dimension:
+            return "Infinite solutions"
+        for j in range(tf.dimension):
+            print tf[j]
 
     def indices_of_first_nonzero_terms_in_each_row(self):
         num_equations = len(self)
@@ -195,41 +227,25 @@ class MyDecimal(Decimal):
 
 
 
-p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['0','1','1']), constant_term='2')
+p1 = Plane(normal_vector=Vector(['5.862','1.178','-10.366']), constant_term='-8.15')
+p2 = Plane(normal_vector=Vector(['-2.931','-0.589','5.183']), constant_term='-4.075')
 s = LinearSystem([p1,p2])
-r = s.compute_rref()
-if not (r[0] == Plane(normal_vector=Vector(['1','0','0']), constant_term='-1') and
-        r[1] == p2):
-    print 'test case 1 failed'
+r = s.compute_solution()
 print r
-p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['1','1','1']), constant_term='2')
-s = LinearSystem([p1,p2])
-r = s.compute_rref()
-if not (r[0] == p1 and
-        r[1] == Plane(constant_term='1')):
-    print 'test case 2 failed'
-print r
-p1 = Plane(normal_vector=Vector(['1','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['0','1','0']), constant_term='2')
-p3 = Plane(normal_vector=Vector(['1','1','-1']), constant_term='3')
-p4 = Plane(normal_vector=Vector(['1','0','-2']), constant_term='2')
-s = LinearSystem([p1,p2,p3,p4])
-r = s.compute_rref()
-if not (r[0] == Plane(normal_vector=Vector(['1','0','0']), constant_term='0') and
-        r[1] == p2 and
-        r[2] == Plane(normal_vector=Vector(['0','0','-2']), constant_term='2') and
-        r[3] == Plane()):
-    print 'test case 3 failed'
-print r
-p1 = Plane(normal_vector=Vector(['0','1','1']), constant_term='1')
-p2 = Plane(normal_vector=Vector(['1','-1','1']), constant_term='2')
-p3 = Plane(normal_vector=Vector(['1','2','-5']), constant_term='3')
+
+p1 = Plane(normal_vector=Vector(['8.631','5.112','-1.816']), constant_term='-5.113')
+p2 = Plane(normal_vector=Vector(['4.315','11.132','-5.27']), constant_term='-6.775')
+p3 = Plane(normal_vector=Vector(['-2.158','3.01','-1.727']), constant_term='-0.831')
 s = LinearSystem([p1,p2,p3])
-r = s.compute_rref()
-if not (r[0] == Plane(normal_vector=Vector(['1','0','0']), constant_term=Decimal('23')/Decimal('9')) and
-        r[1] == Plane(normal_vector=Vector(['0','1','0']), constant_term=Decimal('7')/Decimal('9')) and
-        r[2] == Plane(normal_vector=Vector(['0','0','1']), constant_term=Decimal('2')/Decimal('9'))):
-    print 'test case 4 failed'
+r = s.compute_solution()
+
+print r
+
+p1 = Plane(normal_vector=Vector(['5.262','2.739','-9.878']), constant_term='-3.441')
+p2 = Plane(normal_vector=Vector(['5.111','6.358','7.638']), constant_term='-2.152')
+p3 = Plane(normal_vector=Vector(['2.016','-9.924','-1.367']), constant_term='-9.278')
+p4 = Plane(normal_vector=Vector(['2.167','-13.543','-18.883']), constant_term='-10.567')
+s = LinearSystem([p1,p2,p3,p4])
+r = s.compute_solution()
+
 print r
