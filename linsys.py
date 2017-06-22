@@ -162,7 +162,7 @@ class LinearSystem(object):
 
                 tf.add_multiple_times_row_to_row(coefficient_2,i,j)
         return tf
-    """
+
     def compute_solution(self):
         tf = self.compute_rref()
         indices = tf.indices_of_first_nonzero_terms_in_each_row()
@@ -175,8 +175,8 @@ class LinearSystem(object):
                 a +=1
         if len(tf)-a < tf.dimension:
             return "Infinite solutions"
-        for j in range(tf.dimension):
-            print tf[j]
+        solutions_coordinate = [tf[i].constant_term for i in range(tf.dimension)]
+        return Vector(solutions_coordinate)
     """
     def compute_solution(self):
         try:
@@ -203,15 +203,26 @@ class LinearSystem(object):
     def raise_exception_if_contradictory_equation(self):
         for p in self.planes:
             try:
-                p.first_nonzero_index(p.normal_vector)
+                p.first_nonzero_index(p.normal_vector.coordinates)
 
             except Exception as e:
+                if str(e) == 'No nonzero elements found':
+                    constant_term = MyDecimal(p.constant_term)
+                    if not constant_term.is_near_zero():
+                        raise Exception(self.NO_SOLUTIONS_MSG)
+                else:
+                    raise e
+
+    def raise_exception_if_too_few_pivots(self):
+        pivot_indices = self.indices_of_first_nonzero_terms_in_each_row()
+        num_pivots = sum([1 if index >= 0 else 0 for index in pivot_indices])
+        num_variables = self.dimension
+
+        if num_pivots < num_variables:
+            raise Exception(self.INF_SOLUTIONS_MSG)
 
 
-
-
-
-
+    """
     def indices_of_first_nonzero_terms_in_each_row(self):
         num_equations = len(self)
         num_variables = self.dimension
