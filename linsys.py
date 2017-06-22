@@ -50,46 +50,7 @@ class LinearSystem(object):
 
         self[row_to_be_added_to] = Plane(normal_vector = new_vector,
                                             constant_term = new_k)
-    """
-    def sorting(system):
-        while True:
-            indices = system.indices_of_first_nonzero_terms_in_each_row()
-            a = 0
-            for i in range(len(system)-1):
-                if indices[i] > indices[i+1] or indices[i] < 0:
-                    system.swap_rows(i,i+1)
-                    a += 1
-            if a == 0:
-                break
 
-        return system
-
-    def compute_triangular_form(self):
-        system = deepcopy(self)
-
-            # check coefficient, and remove coefficient if needed.
-
-        while True:
-
-            system.sorting()
-            print system
-            indices = system.indices_of_first_nonzero_terms_in_each_row()
-            a = 0
-            for i in range(len(indices)):
-                if indices[0] < 0 :
-                    break
-                if indices[i] == indices[i-1]:
-                    coefficient = - system[i].normal_vector.coordinates[indices[i]] / (system[i-1].normal_vector.coordinates[indices[i-1]])
-                    system.add_multiple_times_row_to_row(coefficient,i-1,i)
-                    a += 1
-                    break
-            if a == 0:
-                break
-
-        return system
-
-
-    """
     def compute_triangular_form(self):
         system = deepcopy(self)
         rows = len(system)
@@ -112,8 +73,49 @@ class LinearSystem(object):
                     system.add_multiple_times_row_to_row(coefficient,i,j)
 
         return system
-
     """
+
+    def compute_triangular_form(self):
+        system = deepcopy(self)
+
+        num_equations = len(system)
+        num_variables = system.dimension
+
+        j = 0
+        for i in range(num_equations):
+            while j < num_variables:
+                c = MyDecimal(system[i].normal_vector.coordinates[j])
+                if c.is_near_zero():
+                    swap_succeeded = system.swap_with_row_below_for_nonzero_coefficient_if_able
+                    if not swap_succeeded:
+                        j +=1
+                        continue
+                system.clear_coefficients_below(i,j)
+                j +=1
+                break
+        return system
+    def swap_with_row_below_for_nonzero_coefficient_if_able(self,row,col):
+        num_equations = len(self)
+        for k in range(row+1,num_equations):
+            coefficient = MyDecimal(self[k].normal_vector.coordinates[col])
+            if not coefficient.is_near_zero():
+                self.swap_rows(row,k)
+                return True
+        return False
+    def clear_coefficients_below(self, row, col):
+        num_equations = len(self)
+        beta = MyDecimal(self[row].normal_vector.coordinates[col])
+
+        for k in range(row+1, num_equations):
+            n = self[k].normal_vector.coordinates
+            gamma = n[col]
+            if beta != 0:
+
+                alpha = -gamma/beta
+                self.add_multiple_times_row_to_row(alpha,row,k)
+
+
+
     # use algorethem from myself
     def compute_rref(self):
         tf = self.compute_triangular_form()
@@ -154,9 +156,11 @@ class LinearSystem(object):
             if indices[i] < 0:
                 continue
             coefficient_1 = tf[i].normal_vector.coordinates[indices[i]]
-            new_normal_vector = tf[i].normal_vector.times_scalar(Decimal(1/coefficient_1))
-            new_constant_term = tf[i].constant_term / coefficient_1
-            tf[i] = Plane(normal_vector=new_normal_vector, constant_term=new_constant_term)
+            if coefficient_1 !=0:
+
+                new_normal_vector = tf[i].normal_vector.times_scalar(Decimal(1/coefficient_1))
+                new_constant_term = tf[i].constant_term / coefficient_1
+                tf[i] = Plane(normal_vector=new_normal_vector, constant_term=new_constant_term)
             #print tf[i]
             for j in range(i)[::-1]:
                 coefficient_2 = -tf[j].normal_vector.coordinates[indices[i]]
@@ -308,7 +312,7 @@ p2 = Plane(normal_vector=Vector(['-0.138','-0.138','0.244']), constant_term='0.3
 s = LinearSystem([p1,p2])
 r = s.compute_rref()
 print r
-
+print r[1]
 p1 = Plane(normal_vector=Vector(['8.631','5.112','-1.816']), constant_term='-5.113')
 p2 = Plane(normal_vector=Vector(['4.315','11.132','-5.27']), constant_term='-6.775')
 p3 = Plane(normal_vector=Vector(['-2.158','3.01','-1.727']), constant_term='-0.831')
@@ -317,9 +321,10 @@ r = s.compute_rref()
 
 print r
 
+
 p1 = Plane(normal_vector=Vector(['0.935','1.76','-9.365']), constant_term='-9.955')
 p2 = Plane(normal_vector=Vector(['0.187','0.352','-1.873']), constant_term='-1.991')
-p3 = Plane(normal_vector=Vector(['0.374','0.704','-3.746']), constant_term='3.982')
+p3 = Plane(normal_vector=Vector(['0.374','0.704','-3.746']), constant_term='-3.982')
 p4 = Plane(normal_vector=Vector(['-0.561','-1.056','5.619']), constant_term='5.973')
 
 s = LinearSystem([p1,p2,p3,p4])
