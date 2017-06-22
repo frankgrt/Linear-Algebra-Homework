@@ -106,9 +106,10 @@ class LinearSystem(object):
             # use the number i row to eliminate the coefficient of index before
             # i index for each row below the number i row
             for j in range(i+1, rows):
-                coefficient = -system[j].normal_vector.coordinates[i]/ \
+                if system[i].normal_vector.coordinates[i] != 0:
+                    coefficient = -system[j].normal_vector.coordinates[i]/ \
                                 system[i].normal_vector.coordinates[i]
-                system.add_multiple_times_row_to_row(coefficient,i,j)
+                    system.add_multiple_times_row_to_row(coefficient,i,j)
 
         return system
 
@@ -163,20 +164,34 @@ class LinearSystem(object):
                 tf.add_multiple_times_row_to_row(coefficient_2,i,j)
         return tf
 
+
     def compute_solution(self):
-        tf = self.compute_rref()
-        indices = tf.indices_of_first_nonzero_terms_in_each_row()
-        a = 0
-        for i,p in enumerate(indices):
-            b = MyDecimal(tf[i].constant_term)
-            if p==-1 and (not b.is_near_zero()) :
-                return "NO Solutions"
-            if p==-1:
-                a +=1
-        if len(tf)-a < tf.dimension:
-            return "Infinite solutions"
-        solutions_coordinate = [tf[i].constant_term for i in range(tf.dimension)]
+        rref = self.compute_rref()
+        try:
+            rref.raise_no_solution_error()
+            rref.raise_infinit_solution_error()
+        except Exception as e:
+            if str(e) == self.NO_SOLUTIONS_MSG or str(e) == self.INF_SOLUTIONS_MSG:
+                return str(e)
+        solutions_coordinate = [rref[i].constant_term for i in range(rref.dimension)]
         return Vector(solutions_coordinate)
+
+    def raise_no_solution_error(self):
+        pivot_indices = self.indices_of_first_nonzero_terms_in_each_row()
+        for i,p in enumerate(pivot_indices):
+            b = MyDecimal(self[i].constant_term)
+            if p==-1 and (not b.is_near_zero()):
+                raise Exception(self.NO_SOLUTIONS_MSG)
+
+    def raise_infinit_solution_error(self):
+        pivot_indices = self.indices_of_first_nonzero_terms_in_each_row()
+        num_pivots = sum([1 if index >= 0 else 0 for index in pivot_indices])
+        num_variables = self.dimension
+        if num_pivots < num_variables:
+            raise Exception(self.INF_SOLUTIONS_MSG)
+
+
+
     """
     def compute_solution(self):
         try:
@@ -220,9 +235,9 @@ class LinearSystem(object):
 
         if num_pivots < num_variables:
             raise Exception(self.INF_SOLUTIONS_MSG)
-
-
     """
+
+
     def indices_of_first_nonzero_terms_in_each_row(self):
         num_equations = len(self)
         num_variables = self.dimension
@@ -270,27 +285,44 @@ class MyDecimal(Decimal):
     def is_near_zero(self, eps=1e-10):
         return abs(self) < eps
 
+class Parametrization(object):
+
+    BASEPT_AND_DIR_VECTORS_MUST_BE_IN_SAME_DIM_MSG = ('The basepoint and direction vectors should all live in the same')
+    def __init__(self, basepoint, direction_vectors):
+
+        self.basepoint = basepoint
+        self.direction_vectors = direction_vectors
+        self.dimension = self.basepoint.dimension
+
+        try:
+            for v in direction_vectors:
+                assert v.dimension == self.dimension
+        except AssertionError:
+            raise Exception(BASEPT_AND_DIR_VECTORS_MUST_BE_IN_SAME_DIM_MSG)
 
 
-p1 = Plane(normal_vector=Vector(['5.862','1.178','-10.366']), constant_term='-8.15')
-p2 = Plane(normal_vector=Vector(['-2.931','-0.589','5.183']), constant_term='-4.075')
+
+
+p1 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='-0.714')
+p2 = Plane(normal_vector=Vector(['-0.138','-0.138','0.244']), constant_term='0.319')
 s = LinearSystem([p1,p2])
-r = s.compute_solution()
+r = s.compute_rref()
 print r
 
 p1 = Plane(normal_vector=Vector(['8.631','5.112','-1.816']), constant_term='-5.113')
 p2 = Plane(normal_vector=Vector(['4.315','11.132','-5.27']), constant_term='-6.775')
 p3 = Plane(normal_vector=Vector(['-2.158','3.01','-1.727']), constant_term='-0.831')
 s = LinearSystem([p1,p2,p3])
-r = s.compute_solution()
+r = s.compute_rref()
 
 print r
 
-p1 = Plane(normal_vector=Vector(['5.262','2.739','-9.878']), constant_term='-3.441')
-p2 = Plane(normal_vector=Vector(['5.111','6.358','7.638']), constant_term='-2.152')
-p3 = Plane(normal_vector=Vector(['2.016','-9.924','-1.367']), constant_term='-9.278')
-p4 = Plane(normal_vector=Vector(['2.167','-13.543','-18.883']), constant_term='-10.567')
+p1 = Plane(normal_vector=Vector(['0.935','1.76','-9.365']), constant_term='-9.955')
+p2 = Plane(normal_vector=Vector(['0.187','0.352','-1.873']), constant_term='-1.991')
+p3 = Plane(normal_vector=Vector(['0.374','0.704','-3.746']), constant_term='3.982')
+p4 = Plane(normal_vector=Vector(['-0.561','-1.056','5.619']), constant_term='5.973')
+
 s = LinearSystem([p1,p2,p3,p4])
-r = s.compute_solution()
+r = s.compute_rref()
 
 print r
