@@ -161,7 +161,7 @@ class LinearSystem(object):
                 new_normal_vector = tf[i].normal_vector.times_scalar(Decimal(1/coefficient_1))
                 new_constant_term = tf[i].constant_term / coefficient_1
                 tf[i] = Plane(normal_vector=new_normal_vector, constant_term=new_constant_term)
-            #print tf[i]
+
             for j in range(i)[::-1]:
                 coefficient_2 = -tf[j].normal_vector.coordinates[indices[i]]
 
@@ -171,12 +171,18 @@ class LinearSystem(object):
 
     def compute_solution(self):
         rref = self.compute_rref()
+
         try:
             rref.raise_no_solution_error()
-            rref.raise_infinit_solution_error()
+            rref.check_infinit_solution()
         except Exception as e:
-            if str(e) == self.NO_SOLUTIONS_MSG or str(e) == self.INF_SOLUTIONS_MSG:
+            if str(e) == self.NO_SOLUTIONS_MSG
                 return str(e)
+            if str(e) == self.INF_SOLUTIONS_MSG:
+                return str(e)
+
+
+
         solutions_coordinate = [rref[i].constant_term for i in range(rref.dimension)]
         return Vector(solutions_coordinate)
 
@@ -187,12 +193,74 @@ class LinearSystem(object):
             if p==-1 and (not b.is_near_zero()):
                 raise Exception(self.NO_SOLUTIONS_MSG)
 
-    def raise_infinit_solution_error(self):
+    def check_infinit_solution(self):
         pivot_indices = self.indices_of_first_nonzero_terms_in_each_row()
         num_pivots = sum([1 if index >= 0 else 0 for index in pivot_indices])
         num_variables = self.dimension
         if num_pivots < num_variables:
-            raise Exception(self.INF_SOLUTIONS_MSG)
+            return(self.compute_parametriztion())
+
+
+    def compute_parametriztion(self):
+
+        rows = len(self)
+        cols = self.dimension
+        matrix = []
+        k_list = []
+        for i,p in enumerate(self):
+            each_row = []
+            k_list = []
+            for k in p.normal_vector.coordinates:
+                each_row.append(k)
+            each_row.append(p.constant_term)
+            matrix.append(each_row)
+
+        if rows > cols:
+            for i in range(rows - cols):
+                matrix.pop()
+
+        add_row = [Decimal("0") for i in range(cols+1)]
+        for j,h in enumerate(matrix):
+            if len(matrix) < cols and h[j] !=1:
+                matrix.insert(j,add_row)
+
+        for l,m in enumerate(matrix):
+            m[l] += -1
+
+
+        basepoint_matrix = []
+        for i in matrix:
+            basepoint_matrix.append(i[-1])
+        basepoint = Vector(basepoint_matrix)
+
+        direction_vectors_matrix = []
+        for i in range(1,cols):
+            direction_vectors_matrix_row = []
+            for j in range(len(matrix)):
+                direction_vectors_matrix_row.append(-matrix[j][i])
+            row = Vector(direction_vectors_matrix_row)
+            print row
+            direction_vectors_matrix.append(row)
+
+        p = Parametrization(basepoint, direction_vectors_matrix)
+
+        return p
+
+
+    """
+    def parametriztion(matrix):
+        rows = len(matrix)
+        cols = rows +1
+        add_row = [Decimal("0") for i in range(cols)]
+
+        for i,p in enumerate(matrix):
+            if len(matrix) < cols and p[i] !=1:
+                matrix.insert(i,add_row)
+
+        return matrix
+    """
+
+
 
 
 
@@ -307,19 +375,21 @@ class Parametrization(object):
 
 
 
-p1 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='-0.714')
+p1 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='0.714')
 p2 = Plane(normal_vector=Vector(['-0.138','-0.138','0.244']), constant_term='0.319')
 s = LinearSystem([p1,p2])
-r = s.compute_rref()
-print r
-print r[1]
+t = s.compute_rref()
+
+print t
+
 p1 = Plane(normal_vector=Vector(['8.631','5.112','-1.816']), constant_term='-5.113')
 p2 = Plane(normal_vector=Vector(['4.315','11.132','-5.27']), constant_term='-6.775')
 p3 = Plane(normal_vector=Vector(['-2.158','3.01','-1.727']), constant_term='-0.831')
 s = LinearSystem([p1,p2,p3])
-r = s.compute_rref()
+t = s.compute_solution()
 
-print r
+
+print t
 
 
 p1 = Plane(normal_vector=Vector(['0.935','1.76','-9.365']), constant_term='-9.955')
@@ -328,6 +398,7 @@ p3 = Plane(normal_vector=Vector(['0.374','0.704','-3.746']), constant_term='-3.9
 p4 = Plane(normal_vector=Vector(['-0.561','-1.056','5.619']), constant_term='5.973')
 
 s = LinearSystem([p1,p2,p3,p4])
-r = s.compute_rref()
+t = s.compute_solution()
 
-print r
+
+print t
