@@ -158,8 +158,11 @@ class LinearSystem(object):
 
 
     def compute_parametriztion(self):
+
         rows = len(self)
         cols = self.dimension
+
+        #convert plane object to list of list
         matrix = []
         k_list = []
         for i,p in enumerate(self):
@@ -174,24 +177,26 @@ class LinearSystem(object):
             for i in range(rows - cols):
                 matrix.pop()
 
+        #add "0" row if rows < cols
         add_row = [Decimal("0") for i in range(cols+1)]
-
         if len(matrix) < cols:
             for j,h in enumerate(matrix):
                 a = MyDecimal(h[j]-1)
 
                 if not a.is_near_zero():
                     matrix.insert(j,add_row)
-        print matrix
+
+        #add -1
         for l,m in enumerate(matrix):
             m[l] += -1
 
-
+        # construct basepoint vector
         basepoint_matrix = []
         for i in matrix:
             basepoint_matrix.append(i[-1])
         basepoint = Vector(basepoint_matrix)
 
+        # construct direction vectors
         direction_vectors_matrix = []
         for i in range(1,cols):
             direction_vectors_matrix_row = []
@@ -199,6 +204,7 @@ class LinearSystem(object):
                 direction_vectors_matrix_row.append(-matrix[j][i])
             row = Vector(direction_vectors_matrix_row)
             direction_vectors_matrix.append(row)
+
         p = Parametrization(basepoint, direction_vectors_matrix)
 
         return p
@@ -269,18 +275,21 @@ class Parametrization(object):
     def __str__(self):
         dimension = self.dimension
         d = self.direction_vectors
+
+        # if all coordinates in a direction vetor is 0, delete this vector
         for i,p in enumerate(d):
             count= 0
             for j in p.coordinates:
                 k = MyDecimal(j)
                 if k.is_near_zero():
-
                     count +=1
             if count == p.dimension:
                 del(d[i])
 
+        #initiate output string
         output = ''
 
+        #construct each row of output
         for i in range(dimension):
             output += "x_" + str(i+1)
             output += ' = '
@@ -338,12 +347,11 @@ print "*****************************************************"
 p1 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='-0.714')
 p2 = Plane(normal_vector=Vector(['-0.138','-0.138','0.244']), constant_term='0.319')
 s = LinearSystem([p1,p2])
-t = s.compute_rref()
-r = t.compute_parametriztion()
-#for i in r.direction_vectors:
-#    print i
+t = s.compute_solution()
+
+
 print t
-print r
+
 
 p1 = Plane(normal_vector=Vector(['8.631','5.112','-1.816']), constant_term='-5.113')
 p2 = Plane(normal_vector=Vector(['4.315','11.132','-5.27']), constant_term='-6.775')
