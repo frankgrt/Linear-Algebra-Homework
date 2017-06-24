@@ -73,49 +73,9 @@ class LinearSystem(object):
                     system.add_multiple_times_row_to_row(coefficient,i,j)
 
         return system
+
+
     """
-
-    def compute_triangular_form(self):
-        system = deepcopy(self)
-
-        num_equations = len(system)
-        num_variables = system.dimension
-
-        j = 0
-        for i in range(num_equations):
-            while j < num_variables:
-                c = MyDecimal(system[i].normal_vector.coordinates[j])
-                if c.is_near_zero():
-                    swap_succeeded = system.swap_with_row_below_for_nonzero_coefficient_if_able
-                    if not swap_succeeded:
-                        j +=1
-                        continue
-                system.clear_coefficients_below(i,j)
-                j +=1
-                break
-        return system
-    def swap_with_row_below_for_nonzero_coefficient_if_able(self,row,col):
-        num_equations = len(self)
-        for k in range(row+1,num_equations):
-            coefficient = MyDecimal(self[k].normal_vector.coordinates[col])
-            if not coefficient.is_near_zero():
-                self.swap_rows(row,k)
-                return True
-        return False
-    def clear_coefficients_below(self, row, col):
-        num_equations = len(self)
-        beta = MyDecimal(self[row].normal_vector.coordinates[col])
-
-        for k in range(row+1, num_equations):
-            n = self[k].normal_vector.coordinates
-            gamma = n[col]
-            if beta != 0:
-
-                alpha = -gamma/beta
-                self.add_multiple_times_row_to_row(alpha,row,k)
-
-
-
     # use algorethem from myself
     def compute_rref(self):
         tf = self.compute_triangular_form()
@@ -156,32 +116,28 @@ class LinearSystem(object):
             if indices[i] < 0:
                 continue
             coefficient_1 = tf[i].normal_vector.coordinates[indices[i]]
-            if coefficient_1 !=0:
 
+            if coefficient_1 !=0:
                 new_normal_vector = tf[i].normal_vector.times_scalar(Decimal(1/coefficient_1))
                 new_constant_term = tf[i].constant_term / coefficient_1
                 tf[i] = Plane(normal_vector=new_normal_vector, constant_term=new_constant_term)
 
             for j in range(i)[::-1]:
                 coefficient_2 = -tf[j].normal_vector.coordinates[indices[i]]
-
                 tf.add_multiple_times_row_to_row(coefficient_2,i,j)
         return tf
 
 
     def compute_solution(self):
         rref = self.compute_rref()
-
         try:
             rref.raise_no_solution_error()
             rref.check_infinit_solution()
         except Exception as e:
-            if str(e) == self.NO_SOLUTIONS_MSG
+            if str(e) == self.NO_SOLUTIONS_MSG:
                 return str(e)
             if str(e) == self.INF_SOLUTIONS_MSG:
-                return str(e)
-
-
+                return rref.compute_parametriztion()
 
         solutions_coordinate = [rref[i].constant_term for i in range(rref.dimension)]
         return Vector(solutions_coordinate)
@@ -198,11 +154,10 @@ class LinearSystem(object):
         num_pivots = sum([1 if index >= 0 else 0 for index in pivot_indices])
         num_variables = self.dimension
         if num_pivots < num_variables:
-            return(self.compute_parametriztion())
+            raise Exception(self.INF_SOLUTIONS_MSG)
 
 
     def compute_parametriztion(self):
-
         rows = len(self)
         cols = self.dimension
         matrix = []
@@ -220,10 +175,14 @@ class LinearSystem(object):
                 matrix.pop()
 
         add_row = [Decimal("0") for i in range(cols+1)]
-        for j,h in enumerate(matrix):
-            if len(matrix) < cols and h[j] !=1:
-                matrix.insert(j,add_row)
 
+        if len(matrix) < cols:
+            for j,h in enumerate(matrix):
+                a = MyDecimal(h[j]-1)
+
+                if not a.is_near_zero():
+                    matrix.insert(j,add_row)
+        print matrix
         for l,m in enumerate(matrix):
             m[l] += -1
 
@@ -239,75 +198,11 @@ class LinearSystem(object):
             for j in range(len(matrix)):
                 direction_vectors_matrix_row.append(-matrix[j][i])
             row = Vector(direction_vectors_matrix_row)
-            print row
             direction_vectors_matrix.append(row)
-
         p = Parametrization(basepoint, direction_vectors_matrix)
 
         return p
 
-
-    """
-    def parametriztion(matrix):
-        rows = len(matrix)
-        cols = rows +1
-        add_row = [Decimal("0") for i in range(cols)]
-
-        for i,p in enumerate(matrix):
-            if len(matrix) < cols and p[i] !=1:
-                matrix.insert(i,add_row)
-
-        return matrix
-    """
-
-
-
-
-
-    """
-    def compute_solution(self):
-        try:
-            return self.do_gaussian_elimination_and_extract_solution()
-
-        except Exception as e:
-            if (str(e) == self.NO_SOLUTIONS_MSG or
-                 str(e) == self.INF_SOLUTIONS_MSG):
-                 return str(e)
-            else:
-                raise e
-
-    def do_gaussian_elimination_and_extract_solution(self):
-        rref = self.compute_rref()
-
-        rref.raise_exception_if_contradictory_equation()
-        rref.raise_exception_if_too_few_pivots()
-
-        num_variables = rref.dimension
-        solution_coordinates = [rref.planes[i].constant_term for i in
-                                range(num_variables)]
-        return Vector(solution_coordinates)
-
-    def raise_exception_if_contradictory_equation(self):
-        for p in self.planes:
-            try:
-                p.first_nonzero_index(p.normal_vector.coordinates)
-
-            except Exception as e:
-                if str(e) == 'No nonzero elements found':
-                    constant_term = MyDecimal(p.constant_term)
-                    if not constant_term.is_near_zero():
-                        raise Exception(self.NO_SOLUTIONS_MSG)
-                else:
-                    raise e
-
-    def raise_exception_if_too_few_pivots(self):
-        pivot_indices = self.indices_of_first_nonzero_terms_in_each_row()
-        num_pivots = sum([1 if index >= 0 else 0 for index in pivot_indices])
-        num_variables = self.dimension
-
-        if num_pivots < num_variables:
-            raise Exception(self.INF_SOLUTIONS_MSG)
-    """
 
 
     def indices_of_first_nonzero_terms_in_each_row(self):
@@ -323,7 +218,6 @@ class LinearSystem(object):
                     continue
                 else:
                     raise e
-
         return indices
 
 
@@ -364,7 +258,7 @@ class Parametrization(object):
 
         self.basepoint = basepoint
         self.direction_vectors = direction_vectors
-        self.dimension = self.basepoint.dimension
+        self.dimension = basepoint.dimension
 
         try:
             for v in direction_vectors:
@@ -372,24 +266,93 @@ class Parametrization(object):
         except AssertionError:
             raise Exception(BASEPT_AND_DIR_VECTORS_MUST_BE_IN_SAME_DIM_MSG)
 
+    def __str__(self):
+        dimension = self.dimension
+        d = self.direction_vectors
+        for i,p in enumerate(d):
+            count= 0
+            for j in p.coordinates:
+                k = MyDecimal(j)
+                if k.is_near_zero():
+
+                    count +=1
+            if count == p.dimension:
+                del(d[i])
+
+        output = ''
+
+        for i in range(dimension):
+            output += "x_" + str(i+1)
+            output += ' = '
+            output += str(round(self.basepoint.coordinates[i],3))
+            output += ' + '
+            for j,p in enumerate(d):
+                output += str(round(p.coordinates[i],3))
+                output += ' t_'+str(j)
+                if j < len(d)-1:
+                    output += ' + '
+            output += "\n"
+
+        return output
 
 
 
-p1 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='0.714')
+
+"""
+p1 = Plane(normal_vector=Vector(['1','1','0']), constant_term='-1.326')
+p2 = Plane(normal_vector=Vector(['0','0','1']), constant_term='0.558')
+s = LinearSystem([p1,p2])
+t = s.compute_parametriztion()
+
+print t
+print "*****************************************************"
+
+
+
+p1 = Plane(normal_vector=Vector(['1','0','0.091']), constant_term='-0.301')
+p2 = Plane(normal_vector=Vector(['1','0','-0.509']), constant_term='-0.492')
+p3 = Plane(normal_vector=Vector(['0','0','0']), constant_term='0')
+s = LinearSystem([p1,p2,p3])
+t = s.compute_parametriztion()
+
+print t
+print "*****************************************************"
+
+
+
+p1 = Plane(normal_vector=Vector(['1','1.882','-10.016']), constant_term='-10.647')
+p2 = Plane(normal_vector=Vector(['0','0','0']), constant_term='0')
+p3 = Plane(normal_vector=Vector(['0','0','0']), constant_term='0')
+p4 = Plane(normal_vector=Vector(['0','0','0']), constant_term='0')
+
+s = LinearSystem([p1,p2,p3,p4])
+t = s.compute_parametriztion()
+print t
+print "*****************************************************"
+
+"""
+
+
+
+
+p1 = Plane(normal_vector=Vector(['0.786','0.786','0.588']), constant_term='-0.714')
 p2 = Plane(normal_vector=Vector(['-0.138','-0.138','0.244']), constant_term='0.319')
 s = LinearSystem([p1,p2])
 t = s.compute_rref()
-
+r = t.compute_parametriztion()
+#for i in r.direction_vectors:
+#    print i
 print t
+print r
 
 p1 = Plane(normal_vector=Vector(['8.631','5.112','-1.816']), constant_term='-5.113')
 p2 = Plane(normal_vector=Vector(['4.315','11.132','-5.27']), constant_term='-6.775')
 p3 = Plane(normal_vector=Vector(['-2.158','3.01','-1.727']), constant_term='-0.831')
 s = LinearSystem([p1,p2,p3])
-t = s.compute_solution()
-
-
+t = s.compute_rref()
+r = t.compute_parametriztion()
 print t
+print r
 
 
 p1 = Plane(normal_vector=Vector(['0.935','1.76','-9.365']), constant_term='-9.955')
@@ -398,7 +361,7 @@ p3 = Plane(normal_vector=Vector(['0.374','0.704','-3.746']), constant_term='-3.9
 p4 = Plane(normal_vector=Vector(['-0.561','-1.056','5.619']), constant_term='5.973')
 
 s = LinearSystem([p1,p2,p3,p4])
-t = s.compute_solution()
-
-
+t = s.compute_rref()
+r = t.compute_parametriztion()
 print t
+print r
