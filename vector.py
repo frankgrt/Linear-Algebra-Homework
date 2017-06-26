@@ -86,7 +86,7 @@ class Vector(object):
             if str(e) == self.CANNOT_NORMALIZE_ZERO_VECTOR_MSG:
                 raise Exception(self.NO_UNIQUE_PARALLEL_COMPONENT_MSG)
             else:
-                raise e # coding=utf-8
+                raise e
 
     def orth_component(self, v):
         try:
@@ -100,10 +100,7 @@ class Vector(object):
 
 
     def cross_product(self, v):
-        #product = []
-        #product.append(self.coordinates[1] * v.coordinates[2]-v.coordinates[1]*self.coordinates[2])
-        #product.append(-self.coordinates[0] * v.coordinates[2]+v.coordinates[0]*self.coordinates[2])
-        #product.append(self.coordinates[0] * v.coordinates[1]-v.coordinates[0]*self.coordinates[1])
+
         try:
             x1,y1,z1 = self.coordinates
             x2,y2,z2 = v.coordinates
@@ -134,6 +131,6 @@ class Vector(object):
 
 
 
-#vector_1 = Vector([8.462,7.893,12])
-#vector_2 = Vector([6.984,-5.975])
-#print vector_1.cross_product(vector_2)
+vector_1 = Vector([8.462,7.893])
+vector_2 = Vector([6.984,-5.975])
+print vector_1.cross_product(vector_2)
